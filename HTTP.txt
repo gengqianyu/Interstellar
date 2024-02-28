@@ -1,0 +1,300 @@
+HTTP 协议
+
+	Rest = HTTP 协议 + Json
+
+什么是协
+
+	计算机中的协议和现实中的协议是一样的，一式双份/多分，双份/多份都遵从共同的一个规范，这个规范就可以称为协议。
+	计算机之所以能全世界互通，协议是功不可没，如果没有协议，计算机各说各话，根本谁都听不懂谁。
+	
+HTTP 请求信息和响应信息的格式
+
+	请求：
+	
+	1.请求行
+		
+		请求方法	请求路径	所用的协议
+		GET			/			HTTP/1.1	获取资源
+		POST								创建资源
+		HEAD								功能和 GET 类似，只是返回 reponse header，不返回 Content，一般用于测试资源可用性。
+		PUT								也是创建资源，用于修改资源，如果资源没有就创建
+		PATCH								修改资源
+		TRACE								对请求传输路径进行追踪
+		DELETE								删除资源
+		OPTIONS								返回服务器针对特定资源所支持的 HTTP 请求方法
+		CONNECT								HTTP/1.1 协议中预留给能够将连接改为管道方式的代理服务器
+		
+	2.请求头信息
+	
+	//接收方支持的主体内容格式
+	accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+	
+	//接收方支持的主体内容格式编码格式
+	accept-encoding: gzip, deflate, br
+	
+	//接收方支持的显示语言
+	accept-language: zh-CN,zh;q=0.9
+	
+	//客户代理
+	user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36
+	
+	Content-Type: 标头告诉客户端/服务器实际返回主体/请求主体的内容的内容类型
+		
+		常见的媒体格式类型如下：
+
+		text/html ： 	HTML格式
+		text/plain ：	纯文本格式
+		text/xml ： 	XML 格式
+		image/gif ：	gif 图片格式
+		image/jpeg ：	jpg 图片格式
+		image/png：		png 图片格式
+		
+		以 application 开头的媒体格式类型：
+
+		application/xhtml+xml ：XHTML格式
+		application/xml： 		XML数据格式
+		application/atom+xml ：	Atom XML聚合格式
+		application/json： 		JSON数据格式
+		application/pdf：		pdf格式
+		application/msword ： 	Word文档格式
+		application/octet-stream ： 二进制流数据（如常见的文件下载）
+		application/x-www-form-urlencoded ： <form encType=””> 中默认的 encType，form 表单数据被编码为 key/value 格式发送到服务器（表单默认的提交数据的格式）
+		
+		另外一种常见的媒体格式是上传文件之时使用的：
+
+		multipart/form-data ： 需要在表单中进行文件上传时，就需要使用该格式
+	
+	Content-Encoding：Gzip 响应主体内容的压缩格式，压缩主体可以提到传输效率。server response gzip ，Client 解压缩还原。
+	
+	Content-Length ：发送主体内容长度(压缩后的长度)
+	
+	Cookie：服务器根据用户提交的身份信息，生成唯一的识别码，并且以文本文件的形式存储在客户端的
+	
+	Connection ： keep-alive 连接类型 
+	
+	Referer ：请求来源，可以用来做防盗链(image 标签 src 引用站外图片，就算盗用他人图片)
+			  当 Referer 和 localhost 不匹配是重写图片地址到一个禁止引用
+	
+	缓存相关：
+	
+	Cache-Control：no-cache 不直接使用缓存，必须和服务器校验,no-store 不使用缓存，must-revalidate 必须要向服务器验证，
+					max-age=0 告知服务器客户端希望接收一个在时间不大于 0 秒的资源。
+	
+	存在于 Response Header
+		
+		Last-Modified: Sat, 21 Nov 2020 12:52:26 GMT 资源最后的修改时间，应该是用来配合计算 If-Modified-Since 
+		
+		Etag：签名，可以理解为资源的指纹信息，资源不修改指纹不会变。配合 If-None-Match
+	
+	存在于 第二次 Request Header
+		
+		If-Modified-Since: Wed, 17 Mar 2021 12:48:21 GMT 如果自 Wed, 17 Mar 2021 12:48:21 GMT 这个时间点以后，图片修改过，则重新请求
+	
+		If-None-Match: "6051fa95-1a30e" 如果该资源最新的 Etag 的值 和 If-None-Match 的值不匹配，则重新请求
+	
+	
+	3.请求主体信息
+		
+		user=zhangsan&age=12
+		
+使用 GET 请求
+
+	telnet>
+	GET / HTTP/1.1		请求行：Method，URL，Protocol
+	Host:localhost		请求头信息
+
+	HTTP/1.1 200 OK					状态行：Protocol，Status Code，Status
+	Server: nginx/1.18.0 (Ubuntu)	响应头信息
+	Date: Tue, 16 Mar 2021 08:50:12 GMT
+	Content-Type: text/html
+	Content-Length: 612
+	Last-Modified: Sat, 21 Nov 2020 12:52:26 GMT
+	Connection: keep-alive
+	ETag: "5fb90d8a-264"
+	Accept-Ranges: bytes
+
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<title>Welcome to nginx!</title>
+	<style>
+		body {
+			width: 35em;
+			margin: 0 auto;
+			font-family: Tahoma, Verdana, Arial, sans-serif;
+		}
+	</style>
+	</head>
+	<body>
+	<h1>Welcome to nginx!</h1>
+	<p>If you see this page, the nginx web server is successfully installed and working. Further configuration is required.</p>
+	<p>For online documentation and support please refer to
+	<a href="http://nginx.org/">nginx.org</a>.<br/>
+	Commercial support is available at
+	<a href="http://nginx.com/">nginx.com</a>.</p>
+
+	<p><em>Thank you for using nginx.</em></p>
+	</body>
+	</html>
+	
+使用 POST 请求
+	
+	telnet>
+	POST / HTTP/1.1
+	Host:localhost
+	Content-Type:application/x-www-form-urlencoded #必须添加
+	Content-Length:23
+	
+	name=zhangsan&age=9
+
+	HTTP/1.1 200 OK					状态行：Protocol，Status Code，Status
+	Server: nginx/1.18.0 (Ubuntu)	响应头信息
+	Date: Tue, 16 Mar 2021 08:50:12 GMT
+	Content-Type: text/html
+	Content-Length: 612
+	Last-Modified: Sat, 21 Nov 2020 12:52:26 GMT
+	Connection: keep-alive
+	ETag: "5fb90d8a-264"
+	Accept-Ranges: bytes
+	
+使用 HEAD 请求
+	
+	telnet>
+	HEAD / HTTP/1.1
+	Host:localhost
+
+	HTTP/1.1 200 OK
+	Server: nginx/1.18.0 (Ubuntu)
+	Date: Tue, 16 Mar 2021 11:30:23 GMT
+	Content-Type: text/html
+	Content-Length: 612
+	Last-Modified: Sat, 21 Nov 2020 12:52:26 GMT
+	Connection: keep-alive
+	ETag: "5fb90d8a-264"
+	Accept-Ranges: bytes
+
+使用 GET 请求图片
+
+	telnet>
+	HEAD /a.jpg HTTP/1.1
+	Host:localhost
+
+	HTTP/1.1 200 OK
+	Server: nginx/1.18.0 (Ubuntu)
+	Date: Tue, 16 Mar 2021 11:30:23 GMT
+	Content-Type: image/jpg
+	Content-Length: 2345
+	Last-Modified: Sat, 21 Nov 2020 12:52:26 GMT
+	Connection: keep-alive
+	ETag: "5fb90d8a-264"
+	Accept-Ranges: bytes
+	
+	�AWaw#��X�0q�����
+	�#�ѵB���e�5���`�b5#�����      �Y8�P���@�2bNi�T�7u�
+	�<��rՈ�z�<�K��>�\F�F3�8���~n������t��V)ۂ�iFj��}j�.9�,D��lԪƛ$�j�߈�:T��ҏ���ݳ���J��bT!is�Q`C�����IҊ�:���).j��Z�iEW�B�5�b�B`wT/��1��<�+v�3*,�7J��֪H6��,<��,�d��M�j'lt�m�zw x��Jr�W�M�b��'�7u�r'����U����
+	�3���.B���i�A��jݩ
+                 |�dU�w......
+测试 304
+
+	telnet>
+	HEAD /a.jpg HTTP/1.1
+	Host:localhost
+	If-Modified-Since: Wed, 17 Mar 2021 12:48:21 GMT
+	If-None-Match: "6051fa95-1a30e"
+
+	HTTP/1.1 304 Not Modified
+	Server: nginx/1.18.0 (Ubuntu)
+	Date: Wed, 17 Mar 2021 13:33:04 GMT
+	Last-Modified: Wed, 17 Mar 2021 12:48:21 GMT
+	Connection: keep-alive
+	ETag: "6051fa95-1a30e"
+	
+HTTP 状态码
+	
+	200 OK – [GET]：服务器成功返回用户请求的数据，该操作是幂等的（Idempotent）。
+
+	201 CREATED – [POST/PUT/PATCH]：用户新建或修改数据成功。
+
+	202 Accepted – [*]：表示一个请求已经进入后台排队（异步任务）
+
+	204 NO CONTENT – [DELETE]：用户删除数据成功。
+	
+	301 永久重定向
+	
+	302 临时重定向
+	
+	304 NOT Modified 服务器资源未修改，直接取浏览器的缓存资源。
+
+	400 INVALID REQUEST – [POST/PUT/PATCH]：用户发出的请求有错误，服务器没有进行新建或修改数据的操作，该操作是幂等的。
+
+	401 Unauthorized – [*]：表示用户没有权限(令牌、用户名、密码错误)。
+
+	403 Forbidden – [*] 表示用户得到授权(与401错误相对)，但是访问是被禁止的。
+
+	404 NOT FOUND – [*]：用户发出的请求针对的是不存在的记录，服务器没有进行操作，该操作是幂等的。
+
+	406 Not Acceptable – [GET]：用户请求的格式不可得（比如用户请求JSON格式，但是只有XML格式）。
+
+	410 Gone -[GET]：用户请求的资源被永久删除，且不会再得到的。
+
+	422 Unprocesable entity – [POST/PUT/PATCH] 当创建一个对象时，发生一个验证错误。
+
+	500 INTERNAL SERVER ERROR – [*]：服务器发生错误，用户将无法判断发出的请求是否成功。
+	
+	502 Bad Gateway 作为网关或者代理工作的服务器尝试执行请求时，从上游服务器接收到无效的响应。比如 php-fpm 没有启动就会报 502 错误。
+	
+	504 TIME OUT 
+
+反向 ajax
+		
+	HTTP 持久连接 + 分块传输 = 反向 ajax。
+	
+	反向 ajax 又叫做 comet，server push 服务器推技术
+	
+	应用范围：网页聊天服务器，新浪微博在线聊天，google mail 网页聊天
+	
+	一般而言，HTTP 协议的特点，连接-发送数据-断开。
+	
+	具体上面时间断开？
+	服务器响应 content-length，收到指定长度的内容时，也就断开了。
+	
+	在 HTTP1.1 协议中，允许你不写 content-length，比如要发送的内容长度确实不知道时。
+	这时，需要一个特殊的 Content-type：chunked。
+
+无状态
+
+    http 是一个无状态协议，用户的两次访问之间，服务器并不能识别是同一个用户身份的请求，
+    因此，为了服务器能追踪，识别用户身份的状态信息，服务器必须为客户端设置 cookie 用户的身份标识，cookie 信息保存在 客户端，每次访问带着 cookie 就可以了。
+    或者服务器将客户端身份信息保存在 session 里，保存在服务器端，服务器通过 session id 来识别用户身份，但是 session id 还是需要保存在 cookie 里，由客户端 发给 服务器。
+
+http 2.0 vs http 1.0
+
+相同的协议，方法 GET/POST/PUT/PATCH/OPTIONS/DELETE/HEARD
+          头部 header
+          body
+
+http 2.0 的不同
+    使用 L7层二进制传输，更高效的传输
+    流式传输(streaming) 服务器可以 边准备数据 边给客户端传输，效率更高
+    多路复用(fully multiplexed)     多个不同请求可以 复用同一个连接，http1 可以 公用 连接，但是不能 复用 连接，
+                                   http1 在一个连接上 发完 请求1 必须等到 请求1 reply 后才能发请求 3，
+                                   http2 在一个连接上 发完 请求1 不必等待请求1的 reply 可以马上发请求 3。
+    安全性提升
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

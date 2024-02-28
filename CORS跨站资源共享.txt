@@ -1,0 +1,368 @@
+XSS	(Cross Site Scripting)跨站脚本攻击
+
+	通过页面注入，持久化木马脚本，产生的访问攻击，过滤，转义关键字符。
+
+CSRF(Cross Site Request Forgery) 跨站请求伪造
+	
+		
+					合法 A								User C								非法 B
+					|---|								|---|								|---|
+					|	|								|	|								|	|
+					|	|		浏览器登录网站 A		    |浏	|								|	|
+					|	|<------------------------------|览	|								|	|
+					|	|								|器	|								|	|
+					|	|		验证成功生成 Cookie		|	|								|	|
+					|	|------------------------------>|	|								|	|
+					|	| 								|	| 								|	|
+					|	|								|	|	访问恶意网站 B					|	|								
+					|	|								|	|------------------------------>|	|
+					|	|								|	|								|	|
+					|	|								|	| B 返回攻击 js 代码 要求访问 A	    |	|
+					|	|								|	|<------------------------------|	|
+					|	|								|	|								|	|
+					|	|	访问 A，并执行 B 的恶意代码    	|	|								|	|
+					|	|<------------------------------|	|								|	|
+					|	|								|	|								|	|
+					|---|								|---|								|---|
+	
+	1. 用户 C 打开浏览器，访问受信任网站 A，输入用户名和密码请求登录网站 A；
+
+	2. 在用户信息通过验证后，网站 A 产生 Cookie 信息并返回给浏览器，此时用户登录网站 A 成功，可以正常发送请求到网站 A；
+
+	3. 用户未退出网站 A 之前，在同一浏览器中，打开一个 tag 页访问网站 B；
+
+	4. 网站 B 接收到用户请求后，返回一些攻击性代码，并发出一个请求要求访问第三方站点 A；
+
+	5. 浏览器在接收到这些攻击性代码后，根据网站 B 的请求，在用户不知情的情况下携带 Cookie 信息，向网站 A 发出请求。
+	   网站 A 并不知道该请求其实是由 B 发起的，所以会根据用户 C 的 Cookie 信息以 C 的权限处理该请求，导致来自网站 B 的恶意代码(比如一个删除操作)被执行。
+
+	攻击者利用伪造的会话身份，通过你的浏览器，对被攻击站点进行非法的带权操作;因此完全基于 Cookie 的用户识别是不够的。
+	必须借助 Referer 验证，借助 Token，Larvae 中表单操作都是带服务端下发的 Token，或在 Header 中自定义属性，服务器验证。
+	
+CORS(Cross Origin Resourse-Sharing) 跨域资源共享
+	
+	提起浏览器的同源策略，大家都很熟悉。不同域的客户端脚本不能读写对方的资源。
+	但是，实践中有一些场景需要跨域的读写，所以出现了一些 Hack 的方式来跨域。比如在同域内做一个代理，JSON-P 等
+	但这些方式都存在缺陷，无法完美的实现跨域读写。
+	所以在 XMLHttpRequest v2 标准下，提出了 CORS(Cross Origin Resourse-Sharing) 的模型，试图提供安全方便的跨域读写资源。
+	目前主流浏览器均支持 CORS。
+	
+	CORS 定义了两种跨域请求：
+	
+		.简单跨域请求
+		.非简单跨域请求
+	
+简单跨域请求
+	
+	当一个跨域请求发送简单跨域请求包括：
+	
+	Request Method 只允许 3 个方法
+	
+		.HEAD
+		
+		.GET
+		
+		.POST
+		
+	Request Header 只允许有 4 个字段
+	
+		.Accept				#浏览器可以接收的媒体类型
+				
+		.Accept-Language	
+		
+		.Content-Language
+		
+		.Content-Type
+		
+		.Last-Event-ID
+		
+	Content-Type 如果设置了，则其值只能是 
+		
+		.application/x-www-form-urlencoded
+		
+		.multipart/form-data (含有多部分文件)
+		
+		.text/plain (简单文本)
+		
+	说起来比较复杂，简单的意思就是设置了一个白名单，符合以上条件的才是简单请求，其他不符合的都是非简单请求。 
+	
+	之所以有这个分类，是因为浏览器对简单请求和非简单请求的处理机制是不一样的。
+	
+	当我们需要发送一个跨域请求的时候，浏览器会首先检查这个请求，如果它符合上面所述的简单跨域请求，浏览器就会立刻发送这个请求。
+	如果浏览器检查之后发现这是一个非简单请求，比如请求 Header 含有 X-Forwarded-For 字段。
+	这时候浏览器不会马上发送这个请求，而是有一个 pre’flight (飞行前)，跟服务器验证的过程。
+	
+	浏览器先发送一个 OPTIONS 方法的预检请求,
+	如果预检通过，则发送这个请求，否则就拒绝发送这个跨域请求。
+	
+	其实就是在服务端设置了一个白名单，
+	客户端浏览器，先问发个 OPTIONS 请求问一下服务端，客户端所在的域是否在服务端的白名单里面，
+	在白名单内就给客户端浏览器回一个通行证就是一个控制字段，然后浏览器就能开放同源策略，正常就可以做跨域请求了。
+
+简单请求
+	
+	基本流程
+	
+	对于简单请求，浏览器直接发出 CORS 请求。具体来说，就是在头信息之中，增加一个 Origin 字段。
+
+	下面是一个例子，浏览器发现这次跨源 AJAX 请求是简单请求，就自动在头信息之中，添加一个 Origin 字段。
+
+		GET /cors HTTP/1.1
+		Origin: http://api.bob.com	#访问源，意思是从我这个host 来的请求，服务器让不让过。
+		Host: api.alice.com
+		Accept-Language: en-US
+		Connection: keep-alive
+		User-Agent: Mozilla/5.0...
+	
+	上面的头信息中，Origin 字段用来说明，本次请求来自哪个源（协议 + 域名 + 端口）。服务器根据这个值，决定是否同意这次请求。
+
+	如果 Origin 指定的源，不在许可范围内，服务器会返回一个正常的 HTTP 回应。
+	浏览器发现，这个回应的头信息没有包含 Access-Control-Allow-Origin 字段（详见下文），就知道出错了，从而抛出一个错误，被 XMLHttpRequest 的 onerror 回调函数捕获。
+	注意，这种错误无法通过状态码识别，因为 HTTP 回应的状态码有可能是 200。
+
+	如果 Origin 指定的域名在许可范围内，服务器返回的响应，会多出几个头信息字段。
+	
+		Access-Control-Allow-Origin: http://api.bob.com
+		Access-Control-Allow-Credentials: true
+		Access-Control-Expose-Headers: FooBar
+		Content-Type: text/html; charset=utf-8
+		
+	上面的头信息之中，有三个与 CORS 请求相关的字段，都以 Access-Control- 开头。
+
+		1.Access-Control-Allow-Origin
+
+		该字段是必须的。它的值要么是请求时 Origin 字段的值，要么是一个 *，表示接受任意域名的请求。
+
+		2.Access-Control-Allow-Credentials
+
+		该字段可选。它的值是一个布尔值，表示是否允许发送 Cookie。
+		默认情况下，Cookie 不包括在 CORS 请求之中。设为 true，即表示服务器明确许可，Cookie 可以包含在请求中，一起发给服务器。
+		这个值也只能设为 true，如果服务器不要浏览器发送 Cookie，删除该字段即可。
+
+		3.Access-Control-Expose-Headers
+
+		该字段可选。CORS 请求时，XMLHttpRequest 对象的 getResponseHeader() 方法只能拿到6个基本字段：Cache-Control、Content-Language、Content-Type、Expires、Last-Modified、Pragma。
+		如果想拿到其他字段，就必须在 Access-Control-Expose-Headers 里面指定。上面的例子指定，getResponseHeader('FooBar')可以返回 FooBar 字段的值。
+	
+	withCredentials 属性
+	
+		上面说到，CORS 请求默认不发送 Cookie 和 HTTP 认证信息。
+		如果要把 Cookie 发到服务器，一方面要服务器同意，指定 Access-Control-Allow-Credentials 字段。
+			
+			Access-Control-Allow-Credentials: true
+		
+		另一方面，开发者必须在 AJAX 请求中打开 withCredentials 属性。
+		
+			var xhr = new XMLHttpRequest();
+			xhr.withCredentials = true;
+		
+		否则，即使服务器同意发送 Cookie，浏览器也不会发送。或者，服务器要求设置 Cookie，浏览器也不会处理。
+
+		但是，如果省略 withCredentials 设置，有的浏览器还是会一起发送 Cookie。这时，可以显式关闭 withCredentials。
+		
+			xhr.withCredentials = false;
+		
+		需要注意的是，如果要发送 Cookie，Access-Control-Allow-Origin 就不能设为星号，必须指定明确的、与请求网页一致的域名。
+		同时，Cookie 依然遵循同源政策，只有用服务器域名设置的 Cookie 才会上传，其他域名的 Cookie 并不会上传，
+		且(跨源)原网页代码中的 document.cookie 也无法读取服务器域名下的 Cookie,这样就防止了跨域 Cookie 泄露问题，保证了安全。
+	
+非简单请求
+	
+	.预检请求
+	
+	非简单请求是那种对服务器有特殊要求的请求，比如请求方法是 PUT 或 DELETE，或者 Content-Type 字段的类型是 application/json。
+
+	非简单请求的 CORS 请求，会在正式通信之前，增加一次 HTTP 查询请求，称为"预检"请求（preflight）。
+
+	浏览器先询问服务器，当前网页所在的域名是否在服务器的许可名单之中，以及可以使用哪些 HTTP 动词和头信息字段。
+	只有得到肯定答复，浏览器才会发出正式的 XMLHttpRequest 请求，否则就报错。
+
+	下面是一段浏览器的 JavaScript 脚本。
+	
+		var url = 'http://api.alice.com/cors';
+		var xhr = new XMLHttpRequest();
+		xhr.open('PUT', url, true);
+		xhr.setRequestHeader('X-Custom-Header', 'value');
+		xhr.send();
+	
+	上面代码中，HTTP 请求的方法是 PUT，并且发送一个自定义头信息 X-Custom-Header。
+
+	浏览器发现，这是一个非简单请求，就自动发出一个"预检"请求，要求服务器确认可以这样请求。
+	下面是这个"预检"请求的 HTTP 头信息。
+
+		OPTIONS /cors HTTP/1.1
+		Origin: http://api.bob.com
+		Access-Control-Request-Method: PUT
+		Access-Control-Request-Headers: X-Custom-Header
+		Host: api.alice.com
+		Accept-Language: en-US
+		Connection: keep-alive
+		User-Agent: Mozilla/5.0...
+	
+	"预检"请求用的请求方法是 OPTIONS，表示这个请求是用来询问的。头信息里面，关键字段是 Origin，表示请求来自哪个源。
+
+	除了 Origin 字段，"预检"请求的头信息包括两个特殊字段。
+
+		1.Access-Control-Request-Method
+
+	该字段是必须的，用来列出浏览器的 CORS 请求会用到哪些 HTTP 方法，上例是 PUT。
+
+		2.Access-Control-Request-Headers
+
+	该字段是一个逗号分隔的字符串，指定浏览器 CORS 请求会额外发送的头信息字段，上例是 X-Custom-Header。
+	
+	.预检请求的回应
+	
+	服务器收到"预检"请求以后，检查了 Origin、Access-Control-Request-Method 和 Access-Control-Request-Headers 字段以后，确认允许跨源请求，就可以做出回应。
+	
+		HTTP / 1.1 200 OK
+		Date: Mon, 01 Dec 2008 01:15:39 GMT
+		Server: Apache/2.0.61 (Unix)
+		Access-Control-Allow-Origin: http://api.bob.com
+		Access-Control-Allow-Methods: GET, POST, PUT
+		Access-Control-Allow-Headers: X-Custom-Header
+		Content-Type: text/html; charset=utf-8
+		Content-Encoding: gzip
+		Content-Length: 0
+		Keep-Alive: timeout=2, max=100
+		Connection: Keep-Alive
+		Content-Type: text/plain
+		
+	上面的 HTTP 回应中，关键的是 Access-Control-Allow-Origin 字段，表示 http://api.bob.com 可以请求数据。
+	该字段也可以设为 * (星号)，表示同意任意跨源请求。
+
+		Access-Control-Allow-Origin: *
+	
+	如果服务器否定了"预检"请求，会返回一个正常的 HTTP 回应，但是没有任何 CORS 相关的头信息字段。
+	这时，浏览器就会认定，服务器不同意预检请求，因此触发一个错误，被 XMLHttpRequest 对象的 onerror 回调函数捕获。
+	控制台会打印出如下的报错信息。
+	
+		XMLHttpRequest cannot load http://api.alice.com.
+		Origin http://api.bob.com is not allowed by Access-Control-Allow-Origin.
+	
+	服务器回应的其他 CORS 相关字段如下。
+	
+		Access-Control-Allow-Methods: GET, POST, PUT
+		
+		Access-Control-Allow-Headers: X-Custom-Header
+		
+		Access-Control-Allow-Credentials: true
+		
+		Access-Control-Max-Age: 1728000
+		
+	1.Access-Control-Allow-Methods
+
+	该字段必需，它的值是逗号分隔的一个字符串，表明服务器支持的所有跨域请求的方法。
+	注意，返回的是所有支持的方法，而不单是浏览器请求的那个方法。这是为了避免多次"预检"请求。
+
+	2.Access-Control-Allow-Headers
+
+	如果浏览器请求包括 Access-Control-Request-Headers 字段，则 Access-Control-Allow-Headers 字段是必需的。
+	它也是一个逗号分隔的字符串，表明服务器支持的所有头信息字段，不限于浏览器在"预检"中请求的字段。
+
+	3.Access-Control-Allow-Credentials
+
+	该字段与简单请求时的含义相同。
+
+	4.Access-Control-Max-Age
+
+	该字段可选，用来指定本次预检请求的有效期，单位为秒。
+	上面结果中，有效期是20天（1728000秒），即允许缓存该条回应1728000秒（即20天），在此期间，不用发出另一条预检请求。
+	
+	.浏览器的正常请求和回应
+	
+	一旦服务器通过了"预检"请求，以后每次浏览器正常的 CORS 请求，就都跟简单请求一样，会有一个 Origin 
+	头信息字段。服务器的回应，也都会有一个 Access-Control-Allow-Origin 头信息字段。
+	
+	下面是"预检"请求之后，浏览器的正常 CORS 请求。
+	
+		PUT /cors HTTP/1.1
+		Origin: http://api.bob.com
+		Host: api.alice.com
+		X-Custom-Header: value
+		Accept-Language: en-US
+		Connection: keep-alive
+		User-Agent: Mozilla/5.0...
+	
+	上面头信息的 Origin 字段是浏览器自动添加的。
+		
+	下面是服务器正常的回应。
+	
+		Access-Control-Allow-Origin: http://api.bob.com
+		Content-Type: text/html; charset=utf-8
+	
+	上面头信息中，Access-Control-Allow-Origin 字段是每次回应都必定包含的。
+
+与 JSONP 的比较
+	
+	CORS 与 JSONP 的使用目的相同，但是比 JSONP 更强大。
+
+	JSONP 只支持 GET 请求，CORS 支持所有类型的 HTTP 请求。
+	JSONP 的优势在于支持老式浏览器，以及可以向不支持 CORS 的网站请求数据。
+	
+
+攻击模式
+
+		恶意服务器					外部目标
+	|---------------|			|---------------|
+	|	Mailcious	|			|	External	|
+	|	Server		|			|	Target		|
+	|-------|-------|			|-------^-------|
+			|							|
+			|							|
+			|---------HTML------|		|
+								|		|
+								|		|
+	|-----------------------|---v---|---|---------------------------|
+	|	Internal			|  边界	|---|							|
+	|	Network				|---^---|								|
+	|	实际网络				    |									|
+	|                           |				内部目标	            |
+	|						|---v---|		|---------------|		|		
+	|						|	PC	|------->	Internal	|		|
+	|						|-------|		|	Target		|		|
+	|										|---------------|		|
+	|---------------------------------------------------------------|
+
+	从思路上讲，有两种类型的攻击方式。
+	
+	一种是在攻击者自己控制的网页上嵌入跨域请求，用户访问链接，执行了跨域请求，从而攻击目标，比如访问了内网敏感资源。
+	
+	还有一种是正常的网页被嵌入了，到攻击者控制页面的跨域请求(利用非法 JS 把 cookie 发送给攻击者)，从而劫持用户的会话。
+
+攻击场景
+
+	先看第一种思路的攻击场景：
+
+	1.复杂csrf。
+	  传统的 csrf 都是利用 html 标签和表单来发送请求。没有办法实现一些复杂步骤的 csrf，
+	  比如模拟购物，先加购物车，结算，填写信息，等等。比如上传文件。具体可以参考利用 csrf 上传文件。
+
+	2.访问内网敏感资源。这个在一定的条件下是可以实现的。
+	  比如内网的服务器配置了 Access-Control-Allow-Origin: * 允许任何来自任意域的跨域请求。
+	  用户访问恶意网页的时候，执行了到内网服务器 192.168.1.123/password.txt 的请求，脚本在接收到服务器返回之后，将内容发送到攻击者的服务器上。
+
+	第二种思路的场景:
+
+	1.交互式xss。
+	  参考揭密 HTML5 带来的攻击手法中讲到的 shell of the future 工具。
+	  通过 cors，绕过一些反会话劫持的方法，如 HTTP-Only 限制的 cookie，绑定 IP 地址的会话 ID 等，劫持用户会话。
+
+	2.程序猿在写 ajax 请求的时候，对目标域限制不严。
+	  有点类似于 url 跳转。facebook 出现过这样一个案例。javascript 通过 url 里的参数进行 ajax 请求。通过控制这个 url参数修改 实现注入攻击。
+
+注意事项
+
+	服务器接收到跨域请求的时候，并没有先验证，而是先处理了请求。
+	所以从某种程度上来说，在支持 CORS 的浏览器上实现跨域的写资源，打破了传统同源策略下不能跨域读写资源。
+
+	再一个就是，如果程序猿偷懒将 Access-Control-Allow-Origin 设置为允许来自所有域的跨域请求。
+	那么 CORS 的安全机制几乎就无效了。不过先别高兴的太早。
+	其实这里在设计的时候有一个很好的限制。xml’http’request 发送的请求需要使用 with’Credentials (凭证) 来带上 cookie，
+	如果一个目标域设置成了允许任意域的跨域请求，这个请求又带着 cookie 的话，这个请求是不合法的。
+	也就是如果需要实现带 cookie 的跨域请求，需要明确的配置允许来源的域，使用任意域的配置是不合法的，
+	浏览器会屏蔽掉返回的结果。Javascript 就没法获取返回的数据了。这是 CORS 模型最后一道防线。
+	假如没有这个限制的话，那么 Javascript 就可以获取返回数据中的 csrf token，以及各种敏感数据。这个限制极大的降低了 CORS 的风险。
+
+	注意：为什么 APP 可以进行不同源的网络访问，很简单同源策略只是浏览器应用的行为。并不是所有网络应用的通用行为。
+
