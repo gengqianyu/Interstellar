@@ -47,7 +47,7 @@ sudo iptables -t nat -A POSTROUTING -o enp0s5 -s 10.37.129.24 -d 10.211.55.25 -j
 sudo iptables -A FORWARD -i enp0s5 -o enp0s6 -p udp --dport 51820 -j ACCEPT
 sudo iptables -A FORWARD -i enp0s6 -o enp0s5 -p udp --sport 51820 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
-# DNAT：将 节点B 外网IP 10.211.55.26 的 51820 端口 转发到 节点C 10.37.129.24:51820 端口
+# DNAT：将 节点B 外网IP 10.211.55.26 的 51820 端口 转发到 节点C 10.37.129.25:51820 端口
 sudo iptables -t nat -A PREROUTING -i enp0s5 -p udp --dport 51820 -j DNAT --to-destination 10.37.129.24:51820
 
 # 凡是通过 10.37.129.0/24 网络的流量，直接通过 走 enp0s6 mac 链路层转发，不经过 路由。
