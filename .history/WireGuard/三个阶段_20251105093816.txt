@@ -91,6 +91,3 @@
 
 请求流程如下：
 APP -> (OS，根据系统路由规则检测出口ip是否为wg段) -> [wg tun,接收OS发来的包] -> [wg device，判断去向ip是否allow，加密] -> [wg conn，发送给对应ip的peer] -> 网卡
-
-响应流程如下：
- 网卡 -> [wg conn] -> [wg device，解密，判断ip合法，给tun] -> [wg tun，写入OS] -> (OS，根据系统路由规则转发包裹到eth0) -> APP
