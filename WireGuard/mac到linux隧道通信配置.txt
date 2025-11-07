@@ -1,0 +1,24 @@
+mac 客户端
+sudo ifconfig utun8 10.0.0.3 10.0.0.1 netmask 255.255.255.0
+
+➜  wireguard cat utun8.conf 
+[Interface]
+PrivateKey = AMcq7eiSR2JDiowuk3USr31c5p77rmDbl7NFwD/yhU4=
+ListenPort = 51820
+
+[Peer]
+PublicKey = EBn6yv7ePfzpAFQuROjaY1tfCahdj5rM9gkLOJojm3c=
+AllowedIPs = 10.0.0.1/32     # 仅允许服务端的 IP 10.0.0.3
+Endpoint = 10.211.55.24:51820
+PersistentKeepalive = 25
+
+liunx 服务端
+sudo ip addr add 10.0.0.1/24 dev wg0 # 注意网段，如果设置的是 10.0.0.1/32 这是不对的，和 mac 端的 子网掩码应该对上是 /24 的 不是 /32 的
+
+gengqianyu@haproxy:~/wireguard$ cat wg0.conf 
+[Interface]
+PrivateKey = CJ+k+s1HTgkBX72WXUkUkiITp8nnZDkhRBlS0M7zeFY=
+ListenPort = 51820
+
+PublicKey = CjVlnhZwV79JVyhYlufm5dLUjsIFKGOyBIpw8hBVXmA=
+AllowedIPs = 10.0.0.3/32 # 仅允许客户端的 IP 10.0.0.3
