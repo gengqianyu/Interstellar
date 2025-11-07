@@ -12,6 +12,26 @@ AllowedIPs = 10.0.0.1/32     # 仅允许服务端的 IP 10.0.0.3
 Endpoint = 10.211.55.24:51820
 PersistentKeepalive = 25
 
+测试 ➜  wireguard curl 10.0.0.1:8080
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Directory listing for /</title>
+</head>
+<body>
+<h1>Directory listing for /</h1>
+<hr>
+<ul>
+<li><a href="privatekey">privatekey</a></li>
+<li><a href="publickey">publickey</a></li>
+<li><a href="wg0.conf">wg0.conf</a></li>
+<li><a href="wireguard-go">wireguard-go</a></li>
+</ul>
+<hr>
+</body>
+</html>
+
 liunx 服务端
 sudo ip addr add 10.0.0.1/24 dev wg0 # 注意网段，如果设置的是 10.0.0.1/32 这是不对的，和 mac 端的 子网掩码应该对上是 /24 的 不是 /32 的
 
@@ -22,3 +42,5 @@ ListenPort = 51820
 
 PublicKey = CjVlnhZwV79JVyhYlufm5dLUjsIFKGOyBIpw8hBVXmA=
 AllowedIPs = 10.0.0.3/32 # 仅允许客户端的 IP 10.0.0.3
+
+ 开服务 python3 -m http.server 8080 --bind 10.0.0.1
