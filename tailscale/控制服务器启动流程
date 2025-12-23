@@ -1,0 +1,21 @@
+cmd/tailscale/tailscale.go main
+
+cmd/tailscale/cli/cli.go func Run(args []string)
+	rootCmd := newRootCmd()
+		nilOrCall(maybeWebCmd)
+			cmd/tailscale/cli/web.go
+				Exec: runWeb,
+					webServer, err := web.NewServer(opts)
+						s.apiHandler, metric = s.modeAPIHandler(s.mode)
+							return http.HandlerFunc(s.serveAPI), "web_client_initialization"
+
+
+
+
+
+
+	err = rootCmd.Run(context.Background())
+
+
+
+
