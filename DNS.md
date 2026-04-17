@@ -244,6 +244,7 @@ dig +trace math.stackexchange.com
 ```
 ; <<>> DiG 9.16.1-Ubuntu <<>> +trace math.stackexchange.com
 ;; global options: +cmd
+列出顶级域名 `.` 的所有 NS 记录：
 .                       36213   IN      NS      j.root-servers.net.
 .                       36213   IN      NS      d.root-servers.net.
 .                       36213   IN      NS      k.root-servers.net.
@@ -524,7 +525,7 @@ Name Server: NS-520.AWSDNS-01.NET
 
 如果你管理着一个网络，并且拥有域名 `mydomain.com`，则可以将一台域名为 `www.google.cn.mydomain.com` 的机器添加到 DNS 服务器。
 
-`www.google.cn` 域名被劫持的前提是：有人使用你的 DNS 服务器请求 `www.google.cn`，却忘了在结尾处加上点（`.`），那么就会转到 `www.google.cn.mydomain.com` 这台主机。
+`www.google.cn` 域名被劫持的前提是：**有人使用你的 DNS 服务器请求 `www.google.cn`，却忘了在结尾处加上点（`.`）**，那么就会转到 `www.google.cn.mydomain.com` 这台主机。
 
 在 DNS 服务的体系结构中，每个标签负责直接在下面的级别。例如：
 
