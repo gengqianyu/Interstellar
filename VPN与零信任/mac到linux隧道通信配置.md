@@ -1,0 +1,86 @@
+# Mac 到 Linux 隧道通信配置
+
+## Mac 客户端
+
+```bash
+sudo ifconfig utun8 10.0.0.3 10.0.0.1 netmask 255.255.255.0
+```
+
+```bash
+➜  wireguard cat utun8.conf
+```
+
+```ini
+[Interface]
+PrivateKey = AMcq7eiSR2JDiowuk3USr31c5p77rmDbl7NFwD/yhU4=
+ListenPort = 51820
+
+[Peer]
+PublicKey = EBn6yv7ePfzpAFQuROjaY1tfCahdj5rM9gkLOJojm3c=
+AllowedIPs = 10.0.0.1/32     # 仅允许服务端的 IP 10.0.0.1
+Endpoint = 10.211.55.24:51820
+PersistentKeepalive = 25
+```
+
+### 测试
+
+```bash
+➜  wireguard curl 10.0.0.1:8080
+```
+
+```html
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Directory listing for /</title>
+</head>
+<body>
+<h1>Directory listing for /</h1>
+<hr>
+<ul>
+<li><a href="privatekey">privatekey</a></li>
+<li><a href="publickey">publickey</a></li>
+<li><a href="wg0.conf">wg0.conf</a></li>
+<li><a href="wireguard-go">wireguard-go</a></li>
+</ul>
+<hr>
+</body>
+</html>
+```
+
+---
+
+## Linux 服务端
+
+```bash
+sudo LOG_LEVEL=debug wireguard-go -f wg0
+```
+
+```bash
+sudo ip addr add 10.0.0.1/24 dev wg0  # 注意网段，如果设置的是 10.0.0.1/32 这是不对的，和 Mac 端的子网掩码应该对上是 /24 的不是 /32 的
+```
+
+```bash
+gengqianyu@haproxy:~/wireguard$ cat wg0.conf
+```
+
+```ini
+[Interface]
+PrivateKey = CJ+k+s1HTgkBX72WXUkUkiITp8nnZDkhRBlS0M7zeFY=
+ListenPort = 51820
+
+[Peer]
+PublicKey = CjVlnhZwV79JVyhYlufm5dLUjsIFKGOyBIpw8hBVXmA=
+AllowedIPs = 10.0.0.3/32  # 仅允许客户端的 IP 10.0.0.3
+```
+
+```bash
+sudo wg setconf wg0 wg0.conf
+sudo ip link set dev wg0 up
+```
+
+```bash
+# 开服务
+python3 -m http.server 8080 --bind 10.0.0.1
+```
