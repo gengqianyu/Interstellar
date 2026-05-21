@@ -1,6 +1,6 @@
-AAA是Authen‘ti‘cation(认证),Auth‘o‘ri’zation(授权)和Accounting(计费)的简称，它提供了认证，授权，计费三种安全功能。
-AAA可以通过多种协议来实现，目前华为设备支持基于RADIUS(Rmote Authentication Dial-In User Service,远程身份验证拨入用户服务)协议。
-或HWTACACS(Huawei Terminal Access Controller Access Control System，华为终端门禁控制器门禁系统)协议来实现AAA。
+AAA 是 Authen‘ti‘cation(认证),Auth‘o‘ri’zation(授权)和Accounting(计费)的简称，它提供了认证，授权，计费三种安全功能。
+AAA 可以通过多种协议来实现，目前华为设备支持基于 RADIUS(Rmote Authentication Dial-In User Service,远程身份验证拨入用户服务)协议。
+或 HWTACACS (Huawei Terminal Access Controller Access Control System，华为终端门禁控制器门禁系统)协议来实现 AAA。
 
 AAA应用场景
 	
