@@ -325,7 +325,7 @@ curl --trace output3.txt --trace-time http://www.baidu.com
 curl --trace-ascii output4.txt --trace-time http://www.baidu.com
 ```
 
-举例：有需求每5分钟请求一次 http://www.test.com/a/b 生成一个日志文件。希望一月的日志(正确的和错误的)能写入一个日志文件：
+举例：有需求每5分钟请求一次 <http://www.test.com/a/b> 生成一个日志文件。希望一月的日志(正确的和错误的)能写入一个日志文件：
 
 ```bash
 day=`date +%F`
